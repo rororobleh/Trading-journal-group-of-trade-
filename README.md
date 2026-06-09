@@ -1,0 +1,1 @@
+# Trading-journal-group-of-trade-
