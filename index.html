@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#080b10">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Trading Pro">
+    <title>Trading Journal Pro</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23080b10'/%3E%3Ctext x='50' y='65' font-size='55' text-anchor='middle' fill='%233b82f6'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
+    <style>
+        :root {
+            --bg-primary: #080b10;
+            --bg-secondary: #111620;
+            --bg-tertiary: #1a2030;
+            --bg-card: #141926;
+            --text-primary: #e8edf5;
+            --text-secondary: #6b7a99;
+            --text-muted: #3d4a66;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-glow: rgba(59,130,246,0.15);
+            --success: #22d3a0;
+            --success-bg: rgba(34,211,160,0.08);
+            --success-border: rgba(34,211,160,0.25);
+            --danger: #f43f5e;
+            --danger-bg: rgba(244,63,94,0.08);
+            --danger-border: rgba(244,63,94,0.25);
+            --warning: #fbbf24;
+            --warning-bg: rgba(251,191,36,0.08);
+            --warning-border: rgba(251,191,36,0.25);
+            --border: #1e2840;
+            --border-subtle: #151d2e;
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', 'Segoe UI', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; min-height: 100vh; }
+
+        /* ── SETUP ── */
+        #setup-screen {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 20px;
+            background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse at 80% 80%, rgba(34,211,160,0.05) 0%, transparent 50%),
+                        var(--bg-primary);
+        }
+        .setup-logo { font-size: 48px; margin-bottom: 8px; filter: drop-shadow(0 0 20px rgba(59,130,246,0.4)); text-align:center; }
+        .setup-card {
+            background: var(--bg-secondary); padding: 32px; border-radius: 20px;
+            border: 1px solid var(--border); width: 100%; max-width: 420px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(59,130,246,0.05);
+        }
+        .setup-card h1 { text-align: center; margin-bottom: 4px; font-size: 22px; font-weight: 700; }
+        .setup-subtitle { text-align: center; color: var(--text-secondary); font-size: 13px; margin-bottom: 28px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; color: var(--text-secondary); font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 12px 14px; background: var(--bg-tertiary);
+            border: 1px solid var(--border); border-radius: 8px;
+            color: var(--text-primary); font-size: 15px; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s; font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .form-group textarea { resize: vertical; min-height: 70px; line-height: 1.5; font-size: 14px; }
+        .btn {
+            width: 100%; padding: 14px; background: var(--accent); color: white;
+            border: none; border-radius: 8px; font-size: 15px; font-weight: 600;
+            cursor: pointer; margin-top: 8px; transition: all 0.2s; letter-spacing: 0.2px;
+        }
+        .btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .btn:active { transform: scale(0.98); }
+        .btn-secondary { background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); }
+        .btn-secondary:hover { background: var(--bg-card); border-color: var(--accent); }
+        .btn-success { background: var(--success); color: #000; }
+        .btn-success:hover { filter: brightness(1.1); }
+        .btn-danger { background: var(--danger); }
+        .offline-badge { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--text-muted); font-size: 12px; margin-top: 16px; }
+        .offline-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: blink 2s ease-in-out infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        /* ── LAYOUT ── */
+        #app-container { display: none; max-width: 1100px; margin: 0 auto; padding: 16px; }
+        .app-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 18px; background: var(--bg-secondary); border-radius: 12px;
+            border: 1px solid var(--border); margin-bottom: 20px; gap: 12px; flex-wrap: wrap;
+        }
+        .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; flex-wrap: wrap; }
+        .breadcrumb .sep { color: var(--text-muted); }
+        .breadcrumb span { color: var(--text-secondary); cursor: pointer; transition: color 0.15s; }
+        .breadcrumb span:hover { color: var(--text-primary); }
+        .breadcrumb .current { color: var(--text-primary); cursor: default; }
+        .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .balance-pill {
+            display: flex; align-items: center; gap: 8px; padding: 8px 14px;
+            background: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border);
+        }
+        .balance-lbl { color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .balance-val { font-size: 15px; font-weight: 700; font-family: var(--font-mono); }
+        .year-tag { padding: 8px 12px; background: var(--bg-tertiary); border-radius: 8px; border: 1px solid var(--border); font-size: 12px; color: var(--text-secondary); }
+        .save-badge { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-secondary); padding: 6px 10px; border-radius: 8px; transition: all 0.3s; }
+        .save-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+        .icon-btn {
+            padding: 8px 12px; background: var(--bg-tertiary); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-secondary); cursor: pointer; font-size: 12px;
+            font-weight: 500; transition: all 0.15s; display: flex; align-items: center; gap: 5px; white-space: nowrap;
+        }
+        .icon-btn:hover { border-color: var(--accent); color: var(--text-primary); background: var(--accent-glow); }
+        .icon-btn.danger:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-bg); }
+
+        /* ── VIEWS ── */
+        .view { display: none; animation: fadeIn 0.25s ease; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+        .view-title { font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+
+        /* ── GRIDS ── */
+        .grid-months { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .grid-weeks { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px;
+            padding: 18px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+        }
+        .card::before { content:''; position:absolute; inset:0; opacity:0; transition:opacity 0.2s; background:radial-gradient(circle at 50% 0%, var(--accent-glow), transparent 70%); pointer-events:none; }
+        .card:hover { border-color: var(--border); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+        .card:hover::before { opacity:1; }
+        .card:active { transform: scale(0.97); }
+        .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+        .card p { color: var(--text-secondary); font-size: 12px; }
+        .card .badge { position:absolute; top:10px; right:10px; background:var(--bg-tertiary); padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; border:1px solid var(--border); }
+        .card.positive { border-left: 3px solid var(--success); }
+        .card.negative { border-left: 3px solid var(--danger); }
+        .card-pnl { font-size: 14px; font-weight: 700; margin-top: 8px; font-family: var(--font-mono); }
+
+        /* ── WEEK STATS ── */
+        .week-stats { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 18px; }
+        .stat-box {
+            background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px;
+            padding: 16px 18px; position: relative; overflow: hidden;
+        }
+        .stat-box::after { content:''; position:absolute; bottom:0; left:0; right:0; height:2px; }
+        .stat-box.s-wins::after { background:var(--success); }
+        .stat-box.s-rate::after { background:var(--accent); }
+        .stat-box.s-pnl-pos::after { background:var(--success); }
+        .stat-box.s-pnl-neg::after { background:var(--danger); }
+        .stat-box.s-rr::after { background:var(--warning); }
+        .stat-box .value { font-size: 26px; font-weight: 800; margin-bottom: 2px; letter-spacing: -0.5px; font-family: var(--font-mono); }
+        .stat-box .label { color: var(--text-secondary); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+
+        /* ── TRADES ── */
+        .trades-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+        .trade-slot {
+            background: var(--bg-card); border: 1.5px dashed var(--border); border-radius: 12px;
+            padding: 16px; text-align: center; cursor: pointer; min-height: 130px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: all 0.2s;
+        }
+        .trade-slot:hover { border-color: var(--accent); background: var(--accent-glow); }
+        .trade-slot.filled { border-style: solid; text-align: left; justify-content: flex-start; align-items: flex-start; }
+        .trade-slot.win { border-color: var(--success-border); background: var(--success-bg); }
+        .trade-slot.win:hover { background: rgba(34,211,160,0.13); }
+        .trade-slot.loss { border-color: var(--danger-border); background: var(--danger-bg); }
+        .trade-slot.loss:hover { background: rgba(244,63,94,0.13); }
+        .trade-slot.be { border-color: var(--warning-border); background: var(--warning-bg); }
+        .trade-num { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 5px; }
+        .trade-pair { font-size: 17px; font-weight: 800; margin-bottom: 3px; }
+        .trade-meta { font-size: 11px; color: var(--text-secondary); margin-bottom: 7px; }
+        .trade-badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+        .b-win { background: var(--success); color: #000; }
+        .b-loss { background: var(--danger); color: #fff; }
+        .b-be { background: var(--warning); color: #000; }
+        .trade-pnl { font-size: 14px; font-weight: 700; font-family: var(--font-mono); }
+        .add-icon { font-size: 26px; color: var(--text-muted); margin-bottom: 5px; transition: all 0.2s; }
+        .trade-slot:hover .add-icon { color: var(--accent); transform: scale(1.1); }
+        .add-lbl { font-size: 12px; color: var(--text-muted); }
+
+        /* ── CHART ── */
+        .chart-wrap { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+        .chart-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text-secondary); margin-bottom: 10px; }
+        #pnl-chart { width: 100%; height: 60px; display: block; }
+
+        /* ── MODAL ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(6px);
+            z-index: 1000; justify-content: center; align-items: flex-end;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: var(--bg-secondary); border-radius: 20px 20px 0 0;
+            border: 1px solid var(--border); border-bottom: none;
+            width: 100%; max-height: 92vh; overflow-y: auto; padding: 24px;
+            animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1);
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .modal-header h2 { font-size: 19px; font-weight: 700; }
+        .close-btn {
+            background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-secondary);
+            font-size: 16px; width: 34px; height: 34px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+        }
+        .close-btn:hover { border-color: var(--danger); color: var(--danger); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+        /* ── LOT CALC ── */
+        .lot-calc {
+            background: linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.04));
+            border: 1px solid rgba(59,130,246,0.25); border-radius: 12px;
+            padding: 14px 18px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .lc-info { font-size: 12px; color: var(--text-secondary); }
+        .lc-info strong { color: var(--accent); }
+        .lc-rr { font-size: 11px; color: var(--text-secondary); margin-top: 3px; }
+        .lc-lot { font-size: 22px; font-weight: 800; color: var(--accent); font-family: var(--font-mono); }
+
+        /* ── SCREENSHOTS ── */
+        .screenshots { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+        .ss-box {
+            background: var(--bg-tertiary); border: 1px dashed var(--border); border-radius: 8px;
+            height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--text-secondary); position: relative; overflow: hidden; font-size: 12px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .ss-box:hover { border-color: var(--accent); color: var(--accent); }
+        .ss-box .ss-icon { font-size: 20px; margin-bottom: 4px; }
+        .ss-box .ss-lbl { font-size: 11px; color: var(--text-muted); }
+        .ss-box img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
+        .ss-box input[type="file"] { position:absolute; width:100%; height:100%; opacity:0; cursor:pointer; z-index:2; }
+
+        /* ── STATS VIEW ── */
+        .stats-row { display: grid; grid-template-columns: 1fr; gap: 12px; }
+        .breakdown-list { display: flex; flex-direction: column; gap: 10px; }
+        .bd-row { display: flex; flex-direction: column; gap: 4px; }
+        .bd-top { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; }
+        .bd-name { font-weight: 600; }
+        .bd-meta { color: var(--text-secondary); font-size: 11px; font-family: var(--font-mono); }
+        .bd-bar { height: 6px; border-radius: 4px; background: var(--bg-tertiary); overflow: hidden; }
+        .bd-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+        .donut-legend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 8px; font-size: 11px; color: var(--text-secondary); }
+        .donut-legend .dl-item { display: flex; align-items: center; gap: 5px; }
+        .donut-legend .dl-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+        .empty-stats { color: var(--text-secondary); font-size: 13px; text-align: center; padding: 24px 0; }
+
+        @media (min-width: 768px) {
+            .stats-row { grid-template-columns: 1fr 1fr; }
+        }
+
+        .hidden { display: none !important; }
+
+        @media (min-width: 640px) {
+            .modal-overlay { align-items: center; }
+            .modal-content { border-radius: 16px; max-width: 580px; border-bottom: 1px solid var(--border); }
+            .trades-grid { grid-template-columns: repeat(4,1fr); }
+            .week-stats { grid-template-columns: repeat(4,1fr); }
+        }
+        @media (max-width: 480px) {
+            .app-header { padding: 12px 14px; }
+            #app-container { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div id="setup-screen">
+    <div class="setup-logo">📊</div>
+    <div class="setup-card">
+        <h1>Trading Journal Pro</h1>
+        <p class="setup-subtitle">Suivez chaque trade, améliorez chaque session.</p>
+        <div class="form-group">
+            <label>📅 Année</label>
+            <input type="number" id="journal-year" placeholder="Ex: 2025" step="1" min="2000" max="2100">
+        </div>
+        <div class="form-group">
+            <label>💵 Balance Initiale ($)</label>
+            <input type="number" id="initial-balance" placeholder="Ex: 10000" step="0.01">
+        </div>
+        <div class="form-group">
+            <label>⚠️ Risque par Trade (%)</label>
+            <input type="number" id="risk-percent" placeholder="Ex: 1 ou 2" step="0.1" max="100">
+        </div>
+        <button class="btn" onclick="initializeApp()">Commencer →</button>
+        <button class="btn btn-secondary" onclick="loadFromStorage()" style="margin-top:10px;">Restaurer une sauvegarde</button>
+        <div class="offline-badge"><div class="offline-dot"></div> 100% hors-ligne — données sur cet appareil</div>
+    </div>
+</div>
+
+<!-- APP -->
+<div id="app-container">
+    <div class="app-header">
+        <div class="breadcrumb" id="breadcrumb">
+            <span onclick="showView('months')">Accueil</span>
+        </div>
+        <div class="header-right">
+            <div class="year-tag" id="display-year">📅 2025</div>
+            <div class="balance-pill">
+                <span class="balance-lbl">Solde</span>
+                <span class="balance-val" id="display-balance">$0</span>
+            </div>
+            <div class="save-badge" id="save-status"><div class="save-dot"></div> Synchro</div>
+            <button class="icon-btn" onclick="openSettingsModal()">⚙️ Réglages</button>
+            <button class="icon-btn" onclick="showView('stats')">📊 Stats</button>
+            <button class="icon-btn" onclick="exportData()">💾 Export</button>
+            <button class="icon-btn" onclick="document.getElementById('import-file').click()">📂 Import</button>
+            <button class="icon-btn danger" onclick="resetApp()">🗑️</button>
+            <input type="file" id="import-file" accept="application/json" style="display:none" onchange="importData(this)">
+        </div>
+    </div>
+
+    <div id="view-months" class="view active">
+        <div class="view-title">Mois</div>
+        <div class="grid-months" id="months-grid"></div>
+    </div>
+
+    <div id="view-weeks" class="view">
+        <div class="view-title" id="weeks-title">Semaines</div>
+        <div class="grid-weeks" id="weeks-grid"></div>
+    </div>
+
+    <div id="view-trades" class="view">
+        <div class="week-stats">
+            <div class="stat-box s-wins">
+                <div class="value" id="stat-wins" style="color:var(--success)">0</div>
+                <div class="label">Gains</div>
+            </div>
+            <div class="stat-box s-rate">
+                <div class="value" id="stat-winrate" style="color:var(--accent)">0%</div>
+                <div class="label">Win Rate</div>
+            </div>
+            <div class="stat-box s-pnl-pos" id="pnl-box">
+                <div class="value" id="stat-pnl" style="color:var(--success)">$0</div>
+                <div class="label">P&amp;L Semaine</div>
+            </div>
+            <div class="stat-box s-rr">
+                <div class="value" id="stat-rr" style="color:var(--warning)">—</div>
+                <div class="label">R:R Moyen</div>
+            </div>
+        </div>
+        <div class="chart-wrap" id="chart-wrap" style="display:none">
+            <div class="chart-label">Courbe P&amp;L — Semaine</div>
+            <canvas id="pnl-chart"></canvas>
+        </div>
+        <div class="view-title" style="margin-bottom:12px">8 Trades / Semaine</div>
+        <div class="trades-grid" id="trades-grid"></div>
+    </div>
+
+    <div id="view-stats" class="view">
+        <div class="view-title">Statistiques Globales — <span id="stats-year"></span></div>
+
+        <div class="week-stats" id="global-stats-grid"></div>
+
+        <div class="chart-wrap">
+            <div class="chart-label">Courbe d'Équité — Année</div>
+            <canvas id="equity-chart" style="width:100%;height:140px;display:block"></canvas>
+        </div>
+
+        <div class="stats-row">
+            <div class="chart-wrap">
+                <div class="chart-label">P&amp;L par Mois</div>
+                <canvas id="monthly-chart" style="width:100%;height:160px;display:block"></canvas>
+            </div>
+            <div class="chart-wrap">
+                <div class="chart-label">Répartition Résultats</div>
+                <canvas id="results-donut" style="width:100%;height:160px;display:block"></canvas>
+                <div id="results-legend" class="donut-legend"></div>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="chart-wrap">
+                <div class="chart-label">Win Rate par Paire</div>
+                <div id="breakdown-pair" class="breakdown-list"></div>
+            </div>
+            <div class="chart-wrap">
+                <div class="chart-label">Win Rate par Stratégie</div>
+                <div id="breakdown-strategy" class="breakdown-list"></div>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="chart-wrap">
+                <div class="chart-label">Win Rate par Session</div>
+                <div id="breakdown-session" class="breakdown-list"></div>
+            </div>
+            <div class="chart-wrap">
+                <div class="chart-label">P&amp;L par Émotion</div>
+                <div id="breakdown-emotion" class="breakdown-list"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="trade-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">Nouveau Trade</h2>
+            <button class="close-btn" onclick="closeModal()">✕</button>
+        </div>
+        <form id="trade-form" onsubmit="saveTrade(event)">
+            <input type="hidden" id="trade-index">
+            <div class="lot-calc">
+                <div>
+                    <div class="lc-info">Risque: <strong id="calc-risk-amt">$0</strong> · SL: <strong id="calc-sl-display">0</strong> pips</div>
+                    <div class="lc-rr" id="calc-rr-line">R:R — · P&L estimé: <strong style="color:var(--success)">$0</strong></div>
+                </div>
+                <div class="lc-lot" id="calc-lot">0.00 Lot</div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Paire</label>
+                    <select id="t-pair" required>
+                        <option value="EUR/USD">🇪🇺🇺🇸 EUR/USD</option>
+                        <option value="GBP/USD">🇬🇧🇺🇸 GBP/USD</option>
+                        <option value="XAU/USD">🥇🇺🇸 XAU/USD</option>
+                        <option value="BTC/USD">₿🇺🇸 BTC/USD</option>
+                        <option value="USD/CAD">🇺🇸🇨🇦 USD/CAD</option>
+                        <option value="USD/CHF">🇺🇸🇨🇭 USD/CHF</option>
+                        <option value="NAS100">📈 NAS100</option>
+                        <option value="US30">🏛️ US30</option>
+                        <option value="Autre">⚙️ Autre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Direction</label>
+                    <select id="t-direction" required>
+                        <option value="LONG">📈 LONG</option>
+                        <option value="SHORT">📉 SHORT</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Date</label><input type="date" id="t-date" required></div>
+                <div class="form-group"><label>Heure</label><input type="time" id="t-time" required></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Session</label>
+                    <select id="t-session">
+                        <option>Londres</option><option>New York</option><option>Asie</option><option>Overlap</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Stratégie</label>
+                    <input type="text" id="t-strategy" placeholder="Ex: s1, Breakout" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>SL (pips)</label><input type="number" id="t-sl" placeholder="20" required min="0"></div>
+                <div class="form-group"><label>TP (pips)</label><input type="number" id="t-tp" placeholder="40" required min="0"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Résultat</label>
+                    <select id="t-result" required>
+                        <option value="WIN">✅ WIN</option>
+                        <option value="LOSS">❌ LOSS</option>
+                        <option value="BE">⚖️ BE</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>P&L Réalisé ($) <span style="font-size:10px;color:var(--accent);font-weight:400">(auto)</span></label>
+                    <input type="number" id="t-pnl" placeholder="0.00" step="0.01" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Émotion</label>
+                <select id="t-emotion">
+                    <option value="😐">😐 Neutre</option>
+                    <option value="😊">😊 Confiant</option>
+                    <option value="😰">😰 Anxieux</option>
+                    <option value="🧘">🧘 Discipliné</option>
+                    <option value="😤">😤 Frustré</option>
+                    <option value="🎯">🎯 Focus</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>📝 Notes</label>
+                <textarea id="t-notes" placeholder="Setup, confluences, leçons apprises..."></textarea>
+            </div>
+            <div class="screenshots">
+                <div class="ss-box">
+                    <span class="ss-icon">📷</span><div class="ss-lbl">Avant</div>
+                    <input type="file" accept="image/*" onchange="handleImage(this,'img-before')">
+                    <img id="img-before" class="hidden">
+                </div>
+                <div class="ss-box">
+                    <span class="ss-icon">📷</span><div class="ss-lbl">Après</div>
+                    <input type="file" accept="image/*" onchange="handleImage(this,'img-after')">
+                    <img id="img-after" class="hidden">
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:22px;">
+                <button type="button" class="btn btn-danger" onclick="deleteTrade()" id="btn-delete" style="display:none;width:30%;margin:0;">Supprimer</button>
+                <button type="submit" class="btn btn-success" style="flex:1;margin:0;">Enregistrer le trade</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>⚙️ Réglages</h2>
+            <button class="close-btn" onclick="closeSettingsModal()">✕</button>
+        </div>
+        <div class="form-group">
+            <label>📅 Année</label>
+            <input type="number" id="set-year" step="1" min="2000" max="2100">
+        </div>
+        <div class="form-group">
+            <label>💵 Balance Actuelle ($)</label>
+            <input type="number" id="set-balance" step="0.01">
+        </div>
+        <div class="form-group">
+            <label>⚠️ Risque par Trade (%)</label>
+            <input type="number" id="set-risk" step="0.1" max="100">
+        </div>
+        <button class="btn" onclick="saveSettings()">Enregistrer les modifications</button>
+        <div style="margin:22px 0 14px;border-top:1px solid var(--border)"></div>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">
+            Pour repartir avec une configuration entièrement neuve (nouvelle année, nouveau capital, toutes les données effacées), utilisez le bouton ci-dessous.
+        </p>
+        <button class="btn btn-danger" onclick="resetApp()">🗑️ Nouvelle configuration (efface tout)</button>
+    </div>
+</div>
+
+<script>
+    let appState = { version: 4, year: new Date().getFullYear(), balance: 0, riskPercent: 0, weeks: {} };
+    let currentMonth = null, currentWeek = null;
+
+    const monthWeeksMap = {
+        "Janvier":[1,2,3,4,5],"Février":[6,7,8,9],"Mars":[10,11,12,13],
+        "Avril":[14,15,16,17],"Mai":[18,19,20,21,22],"Juin":[23,24,25,26],
+        "Juillet":[27,28,29,30,31],"Août":[32,33,34,35],"Septembre":[36,37,38,39],
+        "Octobre":[40,41,42,43,44],"Novembre":[45,46,47,48],"Décembre":[49,50,51,52,53]
+    };
+    const monthsList = Object.keys(monthWeeksMap);
+    const pairFlags = {
+        'EUR/USD':'🇪🇺🇺🇸','GBP/USD':'🇬🇧🇺🇸','XAU/USD':'🥇🇺🇸',
+        'BTC/USD':'₿🇺🇸','USD/CAD':'🇺🇸🇨🇦','USD/CHF':'🇺🇸🇨🇭',
+        'NAS100':'📈','US30':'🏛️','Autre':'⚙️'
+    };
+
+    function resetApp() {
+        if (!confirm("⚠️ Cela supprimera DÉFINITIVEMENT toutes vos données. Pensez à exporter avant. Continuer ?")) return;
+        if (!confirm("Êtes-vous vraiment sûr ? Cette action est irréversible.")) return;
+        localStorage.removeItem('tradingJournal_v2');
+        location.reload();
+    }
+
+    function initializeApp() {
+        const year = parseInt(document.getElementById('journal-year').value);
+        const balance = parseFloat(document.getElementById('initial-balance').value);
+        const risk = parseFloat(document.getElementById('risk-percent').value);
+        if (!year || year < 2000 || year > 2100 || !balance || !risk || balance <= 0 || risk <= 0)
+            return alert("Données invalides. Vérifiez les champs.");
+        appState.year = year; appState.balance = balance; appState.riskPercent = risk;
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('app-container').style.display = 'block';
+        updateHeaderStats(); renderMonths(); saveToStorage();
+    }
+
+    function updateHeaderStats() {
+        const b = appState.balance;
+        const el = document.getElementById('display-balance');
+        el.textContent = '$' + b.toFixed(2);
+        el.style.color = b >= 0 ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('display-year').textContent = '📅 ' + (appState.year || new Date().getFullYear());
+    }
+
+    function showView(name) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-' + name).classList.add('active');
+        const bc = document.getElementById('breadcrumb');
+        let h = "<span onclick=\"showView('months')\">Accueil</span>";
+        if (name === 'weeks' || name === 'trades') h += " <span class=\"sep\">›</span> <span onclick=\"showView('weeks')\">" + currentMonth + "</span>";
+        if (name === 'trades') h += " <span class=\"sep\">›</span> <span class=\"current\">Sem. " + currentWeek + "</span>";
+        if (name === 'stats') h += " <span class=\"sep\">›</span> <span class=\"current\">Statistiques</span>";
+        bc.innerHTML = h;
+        if (name === 'stats') renderGlobalStats();
+    }
+
+    function renderMonths() {
+        const grid = document.getElementById('months-grid');
+        grid.innerHTML = '';
+        monthsList.forEach(m => {
+            let count = 0, pnl = 0;
+            monthWeeksMap[m].forEach(w => {
+                if (appState.weeks[w]) {
+                    count += appState.weeks[w].length;
+                    appState.weeks[w].forEach(t => pnl += (t.pnl || 0));
+                }
+            });
+            const card = document.createElement('div');
+            card.className = 'card' + (pnl > 0.01 ? ' positive' : pnl < -0.01 ? ' negative' : '');
+            card.onclick = () => selectMonth(m);
+            const pnlColor = pnl >= 0 ? 'var(--success)' : 'var(--danger)';
+            card.innerHTML = `<div class="badge">${count} trades</div><h3>${m}</h3><p>Sem. ${monthWeeksMap[m][0]}–${monthWeeksMap[m].slice(-1)[0]}</p>${count > 0 ? `<div class="card-pnl" style="color:${pnlColor}">${pnl>=0?'+':''}${pnl.toFixed(2)}$</div>` : ''}`;
+            grid.appendChild(card);
+        });
+    }
+
+    function selectMonth(m) {
+        currentMonth = m;
+        document.getElementById('weeks-title').textContent = m;
+        renderWeeks(); showView('weeks');
+    }
+
+    function renderWeeks() {
+        const grid = document.getElementById('weeks-grid');
+        grid.innerHTML = '';
+        monthWeeksMap[currentMonth].forEach(w => {
+            const trades = appState.weeks[w] || [];
+            const wins = trades.filter(t => t.result === 'WIN').length;
+            const pnl = trades.reduce((s, t) => s + (t.pnl || 0), 0);
+            const card = document.createElement('div');
+            card.className = 'card' + (pnl > 0.01 ? ' positive' : pnl < -0.01 ? ' negative' : '');
+            card.onclick = () => selectWeek(w);
+            const pnlColor = pnl >= 0 ? 'var(--success)' : 'var(--danger)';
+            card.innerHTML = `<div class="badge" style="color:${wins>0?'var(--success)':'var(--text-secondary)'}">${wins}W</div><h3>Sem. ${w}</h3><p>${trades.length}/8 trades</p>${trades.length > 0 ? `<div class="card-pnl" style="color:${pnlColor};font-size:13px">${pnl>=0?'+':''}${pnl.toFixed(2)}$</div>` : ''}`;
+            grid.appendChild(card);
+        });
+    }
+
+    function selectWeek(w) {
+        currentWeek = w;
+        if (!appState.weeks[w]) appState.weeks[w] = [];
+        renderTrades(); showView('trades');
+    }
+
+    function renderTrades() {
+        const trades = appState.weeks[currentWeek];
+        const grid = document.getElementById('trades-grid');
+        grid.innerHTML = '';
+        let wins = 0, totalPnl = 0, totalRR = 0, rrCount = 0;
+        trades.forEach(t => {
+            if (t.result === 'WIN') wins++;
+            totalPnl += (t.pnl || 0);
+            if (t.sl && t.tp && t.sl > 0) { totalRR += t.tp / t.sl; rrCount++; }
+        });
+        document.getElementById('stat-wins').textContent = wins;
+        document.getElementById('stat-winrate').textContent = trades.length ? Math.round(wins/trades.length*100)+'%' : '0%';
+        const pnlEl = document.getElementById('stat-pnl');
+        pnlEl.textContent = (totalPnl>=0?'+':'') + totalPnl.toFixed(2) + '$';
+        pnlEl.style.color = totalPnl >= 0 ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('pnl-box').className = 'stat-box ' + (totalPnl >= 0 ? 's-pnl-pos' : 's-pnl-neg');
+        document.getElementById('stat-rr').textContent = rrCount > 0 ? (totalRR/rrCount).toFixed(2) : '—';
+
+        drawPnlChart(trades);
+
+        for (let i = 0; i < 8; i++) {
+            const t = trades[i];
+            const slot = document.createElement('div');
+            if (t) {
+                const cls = t.result==='WIN'?'win':t.result==='LOSS'?'loss':'be';
+                const bc = t.result==='WIN'?'b-win':t.result==='LOSS'?'b-loss':'b-be';
+                const pc = (t.pnl||0)>=0?'var(--success)':'var(--danger)';
+                slot.className = `trade-slot filled ${cls}`;
+                slot.onclick = () => openTradeModal(i);
+                slot.innerHTML = `<div style="display:flex;justify-content:space-between;width:100%;align-items:center"><div class="trade-num">Trade ${i+1}</div><span style="font-size:14px">${t.emotion||''}</span></div><div class="trade-pair">${pairFlags[t.pair]||''} ${t.pair}</div><div class="trade-meta">${t.direction} · ${t.strategy}</div><div style="display:flex;justify-content:space-between;align-items:center;width:100%"><span class="trade-badge ${bc}">${t.result}</span><div class="trade-pnl" style="color:${pc}">${(t.pnl||0)>=0?'+':''}${parseFloat(t.pnl||0).toFixed(2)}$</div></div>`;
+            } else {
+                slot.className = 'trade-slot';
+                slot.onclick = () => openTradeModal(i);
+                slot.innerHTML = `<div class="add-icon">+</div><div class="add-lbl">Trade ${i+1}</div>`;
+            }
+            grid.appendChild(slot);
+        }
+    }
+
+    function drawPnlChart(trades) {
+        const wrap = document.getElementById('chart-wrap');
+        const canvas = document.getElementById('pnl-chart');
+        if (!trades || trades.length === 0) { wrap.style.display = 'none'; return; }
+        wrap.style.display = 'block';
+        const W = canvas.offsetWidth || 300, H = 60;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = W * dpr; canvas.height = H * dpr;
+        canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        const pts = [0]; let cum = 0;
+        trades.forEach(t => { cum += (t.pnl||0); pts.push(cum); });
+        const minP = Math.min(...pts), maxP = Math.max(...pts);
+        const range = maxP - minP || 1;
+        const pad = 5;
+        const toX = i => pad + (i/(pts.length-1))*(W-pad*2);
+        const toY = v => pad + (1-(v-minP)/range)*(H-pad*2);
+        const pos = pts[pts.length-1] >= 0;
+        const lc = pos ? '#22d3a0' : '#f43f5e';
+        const grad = ctx.createLinearGradient(0,0,0,H);
+        grad.addColorStop(0, pos ? 'rgba(34,211,160,0.22)' : 'rgba(244,63,94,0.22)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.beginPath();
+        ctx.moveTo(toX(0), toY(pts[0]));
+        pts.forEach((p,i) => i>0 && ctx.lineTo(toX(i), toY(p)));
+        ctx.lineTo(toX(pts.length-1), H); ctx.lineTo(toX(0), H);
+        ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(toX(0), toY(pts[0]));
+        pts.forEach((p,i) => i>0 && ctx.lineTo(toX(i), toY(p)));
+        ctx.strokeStyle = lc; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+        if (minP < 0 && maxP > 0) {
+            const y0 = toY(0);
+            ctx.beginPath(); ctx.moveTo(0,y0); ctx.lineTo(W,y0);
+            ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 1;
+            ctx.setLineDash([4,4]); ctx.stroke(); ctx.setLineDash([]);
+        }
+    }
+
+    function openTradeModal(index) {
+        const trades = appState.weeks[currentWeek];
+        const t = trades[index];
+        document.getElementById('trade-index').value = index;
+        document.getElementById('modal-title').textContent = t ? `Modifier Trade ${index+1}` : `Nouveau Trade ${index+1}`;
+        document.getElementById('btn-delete').style.display = t ? 'block' : 'none';
+        if (t) {
+            ['pair','direction','date','time','session','strategy','sl','tp','result','pnl','emotion'].forEach(k => {
+                const el = document.getElementById('t-'+k);
+                if (el) el.value = t[k] || '';
+            });
+            document.getElementById('t-notes').value = t.notes || '';
+            const ib = document.getElementById('img-before'), ia = document.getElementById('img-after');
+            if (t.imgBefore) { ib.src = t.imgBefore; ib.classList.remove('hidden'); } else ib.classList.add('hidden');
+            if (t.imgAfter) { ia.src = t.imgAfter; ia.classList.remove('hidden'); } else ia.classList.add('hidden');
+        } else {
+            document.getElementById('trade-form').reset();
+            document.getElementById('t-date').valueAsDate = new Date();
+            document.getElementById('img-before').classList.add('hidden');
+            document.getElementById('img-after').classList.add('hidden');
+        }
+        updateCalculations();
+        document.getElementById('trade-modal').classList.add('active');
+    }
+
+    function closeModal() { document.getElementById('trade-modal').classList.remove('active'); }
+
+    function openSettingsModal() {
+        document.getElementById('set-year').value = appState.year || new Date().getFullYear();
+        document.getElementById('set-balance').value = appState.balance;
+        document.getElementById('set-risk').value = appState.riskPercent;
+        document.getElementById('settings-modal').classList.add('active');
+    }
+
+    function closeSettingsModal() {
+        document.getElementById('settings-modal').classList.remove('active');
+    }
+
+    function saveSettings() {
+        const year = parseInt(document.getElementById('set-year').value);
+        const balance = parseFloat(document.getElementById('set-balance').value);
+        const risk = parseFloat(document.getElementById('set-risk').value);
+        if (!year || year < 2000 || year > 2100 || isNaN(balance) || !risk || risk <= 0)
+            return alert("Données invalides. Vérifiez les champs.");
+        appState.year = year;
+        appState.balance = balance;
+        appState.riskPercent = risk;
+        updateHeaderStats(); saveToStorage(); closeSettingsModal();
+        renderMonths();
+        if (document.getElementById('view-stats').classList.contains('active')) renderGlobalStats();
+    }
+
+    document.getElementById('settings-modal').addEventListener('click', function(e) { if (e.target===this) closeSettingsModal(); });
+
+    function updateCalculations() {
+        const sl = parseFloat(document.getElementById('t-sl').value) || 0;
+        const tp = parseFloat(document.getElementById('t-tp').value) || 0;
+        const res = document.getElementById('t-result').value;
+        const riskAmt = appState.balance * (appState.riskPercent / 100);
+        document.getElementById('calc-risk-amt').textContent = '$' + riskAmt.toFixed(2);
+        document.getElementById('calc-sl-display').textContent = sl;
+        document.getElementById('calc-lot').textContent = sl > 0 ? (riskAmt/(sl*10)).toFixed(2)+' Lot' : '0.00 Lot';
+        const rr = sl > 0 ? (tp/sl).toFixed(2) : '—';
+        let pnl = 0;
+        if (res === 'LOSS') pnl = -riskAmt;
+        else if (res === 'WIN') pnl = sl > 0 ? riskAmt*(tp/sl) : 0;
+        const pc = pnl >= 0 ? 'var(--success)' : 'var(--danger)';
+        document.getElementById('calc-rr-line').innerHTML = `R:R <strong>${rr}</strong> · P&L estimé: <strong style="color:${pc}">${pnl>=0?'+':''}${pnl.toFixed(2)}$</strong>`;
+        document.getElementById('t-pnl').value = pnl.toFixed(2);
+    }
+
+    document.getElementById('t-sl').addEventListener('input', updateCalculations);
+    document.getElementById('t-tp').addEventListener('input', updateCalculations);
+    document.getElementById('t-result').addEventListener('change', updateCalculations);
+
+    function saveTrade(e) {
+        e.preventDefault();
+        const trades = appState.weeks[currentWeek];
+        const index = parseInt(document.getElementById('trade-index').value);
+        const data = {
+            pair: document.getElementById('t-pair').value,
+            direction: document.getElementById('t-direction').value,
+            date: document.getElementById('t-date').value,
+            time: document.getElementById('t-time').value,
+            session: document.getElementById('t-session').value,
+            strategy: document.getElementById('t-strategy').value,
+            sl: parseFloat(document.getElementById('t-sl').value),
+            tp: parseFloat(document.getElementById('t-tp').value),
+            result: document.getElementById('t-result').value,
+            pnl: parseFloat(document.getElementById('t-pnl').value),
+            emotion: document.getElementById('t-emotion').value,
+            notes: document.getElementById('t-notes').value,
+            imgBefore: document.getElementById('img-before').classList.contains('hidden') ? null : document.getElementById('img-before').src,
+            imgAfter: document.getElementById('img-after').classList.contains('hidden') ? null : document.getElementById('img-after').src
+        };
+        if (index >= 0 && trades[index]) appState.balance -= trades[index].pnl;
+        appState.balance += data.pnl;
+        trades[index] = data;
+        trades.sort((a,b) => new Date(a.date+'T'+a.time) - new Date(b.date+'T'+b.time));
+        updateHeaderStats(); saveToStorage(); closeModal(); renderTrades();
+    }
+
+    function deleteTrade() {
+        if (!confirm('Supprimer ce trade ?')) return;
+        const index = parseInt(document.getElementById('trade-index').value);
+        appState.balance -= appState.weeks[currentWeek][index].pnl;
+        appState.weeks[currentWeek].splice(index, 1);
+        updateHeaderStats(); saveToStorage(); closeModal(); renderTrades();
+    }
+
+    let saveTimeout = null;
+    function saveToStorage() {
+        try {
+            localStorage.setItem('tradingJournal_v2', JSON.stringify(appState));
+            const el = document.getElementById('save-status');
+            el.innerHTML = '<div class="save-dot"></div> Synchro';
+            el.style.opacity = '1';
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => { el.style.opacity = '0.5'; }, 2000);
+        } catch(err) {
+            document.getElementById('save-status').innerHTML = '⚠️ Erreur';
+        }
+    }
+
+    function loadFromStorage() {
+        const data = localStorage.getItem('tradingJournal_v2');
+        if (data) {
+            appState = JSON.parse(data);
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('app-container').style.display = 'block';
+            updateHeaderStats(); renderMonths();
+        } else alert("Aucune sauvegarde trouvée.");
+    }
+
+    function exportData() {
+        const a = document.createElement('a');
+        a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState));
+        a.download = "trading_backup_" + new Date().toISOString().slice(0,10) + ".json";
+        a.click();
+    }
+
+    function importData(input) {
+        if (!input.files || !input.files[0]) return;
+        if (!confirm("Importer ce fichier remplacera toutes les données actuelles. Continuer ?")) { input.value=''; return; }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const imp = JSON.parse(e.target.result);
+                if (typeof imp.balance !== 'number' || !imp.weeks) throw new Error();
+                appState = imp;
+                document.getElementById('setup-screen').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                updateHeaderStats(); renderMonths(); showView('months'); saveToStorage();
+                alert('Importation réussie !');
+            } catch { alert('Erreur : fichier invalide.'); }
+            input.value = '';
+        };
+        reader.readAsText(input.files[0]);
+    }
+
+    function handleImage(input, imgId) {
+        if (!input.files || !input.files[0]) return;
+        if (input.files[0].size > 3*1024*1024) { alert("Image trop volumineuse (max 3 Mo)."); input.value=''; return; }
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const scale = Math.min(1, 1000/img.width);
+                canvas.width = img.width*scale; canvas.height = img.height*scale;
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                document.getElementById(imgId).src = canvas.toDataURL('image/jpeg', 0.75);
+                document.getElementById(imgId).classList.remove('hidden');
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    /* ── GLOBAL STATS ── */
+    function getAllTrades() {
+        const all = [];
+        Object.keys(appState.weeks).forEach(w => {
+            (appState.weeks[w] || []).forEach(t => all.push(Object.assign({ week: parseInt(w) }, t)));
+        });
+        all.sort((a,b) => new Date(a.date+'T'+(a.time||'00:00')) - new Date(b.date+'T'+(b.time||'00:00')));
+        return all;
+    }
+
+    function weekToMonth(w) {
+        for (const m of monthsList) if (monthWeeksMap[m].includes(w)) return m;
+        return null;
+    }
+
+    function renderGlobalStats() {
+        document.getElementById('stats-year').textContent = appState.year || '';
+        const trades = getAllTrades();
+        const grid = document.getElementById('global-stats-grid');
+
+        if (trades.length === 0) {
+            grid.innerHTML = '<div class="empty-stats" style="grid-column:1/-1">Aucun trade enregistré pour le moment.</div>';
+            document.getElementById('equity-chart').parentElement.style.display = 'none';
+            document.querySelectorAll('.stats-row').forEach(r => r.style.display = 'none');
+            return;
+        }
+        document.getElementById('equity-chart').parentElement.style.display = 'block';
+        document.querySelectorAll('.stats-row').forEach(r => r.style.display = '');
+
+        // Core metrics
+        let wins = 0, losses = 0, bes = 0, totalPnl = 0, grossWin = 0, grossLoss = 0;
+        let totalRR = 0, rrCount = 0;
+        let curStreak = 0, curType = null, maxWinStreak = 0, maxLossStreak = 0;
+        trades.forEach(t => {
+            const pnl = t.pnl || 0;
+            totalPnl += pnl;
+            if (t.result === 'WIN') { wins++; grossWin += pnl; }
+            else if (t.result === 'LOSS') { losses++; grossLoss += Math.abs(pnl); }
+            else bes++;
+            if (t.sl && t.tp && t.sl > 0) { totalRR += t.tp / t.sl; rrCount++; }
+            if (t.result === curType) curStreak++;
+            else { curStreak = 1; curType = t.result; }
+            if (t.result === 'WIN') maxWinStreak = Math.max(maxWinStreak, curStreak);
+            if (t.result === 'LOSS') maxLossStreak = Math.max(maxLossStreak, curStreak);
+        });
+        const total = trades.length;
+        const winRate = total ? Math.round(wins/total*100) : 0;
+        const avgRR = rrCount ? (totalRR/rrCount) : 0;
+        const profitFactor = grossLoss > 0 ? (grossWin/grossLoss) : (grossWin > 0 ? Infinity : 0);
+        const expectancy = total ? (totalPnl/total) : 0;
+
+        // Max drawdown on equity curve
+        const startBalance = appState.balance - totalPnl;
+        let equity = startBalance, peak = startBalance, maxDD = 0;
+        const equityPts = [startBalance];
+        trades.forEach(t => {
+            equity += (t.pnl || 0);
+            equityPts.push(equity);
+            if (equity > peak) peak = equity;
+            const dd = peak - equity;
+            if (dd > maxDD) maxDD = dd;
+        });
+
+        const pfDisplay = profitFactor === Infinity ? '∞' : profitFactor.toFixed(2);
+        const totalColor = totalPnl >= 0 ? 'var(--success)' : 'var(--danger)';
+        const expColor = expectancy >= 0 ? 'var(--success)' : 'var(--danger)';
+
+        grid.innerHTML = `
+            <div class="stat-box s-wins"><div class="value" style="color:var(--success)">${total}</div><div class="label">Trades Total</div></div>
+            <div class="stat-box s-rate"><div class="value" style="color:var(--accent)">${winRate}%</div><div class="label">Win Rate</div></div>
+            <div class="stat-box ${totalPnl>=0?'s-pnl-pos':'s-pnl-neg'}"><div class="value" style="color:${totalColor}">${totalPnl>=0?'+':''}${totalPnl.toFixed(2)}$</div><div class="label">P&amp;L Total</div></div>
+            <div class="stat-box s-rr"><div class="value" style="color:var(--warning)">${rrCount?avgRR.toFixed(2):'—'}</div><div class="label">R:R Moyen</div></div>
+            <div class="stat-box s-wins"><div class="value" style="color:var(--text-primary)">${pfDisplay}</div><div class="label">Profit Factor</div></div>
+            <div class="stat-box s-rate"><div class="value" style="color:${expColor}">${expectancy>=0?'+':''}${expectancy.toFixed(2)}$</div><div class="label">Expectancy / Trade</div></div>
+            <div class="stat-box s-pnl-neg"><div class="value" style="color:var(--danger)">-${maxDD.toFixed(2)}$</div><div class="label">Max Drawdown</div></div>
+            <div class="stat-box s-wins"><div class="value" style="color:var(--text-primary)">🔥${maxWinStreak} / 🥶${maxLossStreak}</div><div class="label">Meilleures Séries (W/L)</div></div>
+        `;
+
+        drawEquityChart(equityPts);
+        drawMonthlyChart(trades);
+        drawResultsDonut(wins, losses, bes);
+        renderBreakdown('breakdown-pair', groupBy(trades, 'pair'));
+        renderBreakdown('breakdown-strategy', groupBy(trades, 'strategy'));
+        renderBreakdown('breakdown-session', groupBy(trades, 'session'));
+        renderEmotionBreakdown(trades);
+    }
+
+    function groupBy(trades, key) {
+        const map = {};
+        trades.forEach(t => {
+            const k = t[key] || '—';
+            if (!map[k]) map[k] = { wins: 0, total: 0, pnl: 0 };
+            map[k].total++;
+            map[k].pnl += (t.pnl || 0);
+            if (t.result === 'WIN') map[k].wins++;
+        });
+        return Object.entries(map)
+            .map(([name, v]) => ({ name, ...v, rate: Math.round(v.wins/v.total*100) }))
+            .sort((a,b) => b.total - a.total);
+    }
+
+    function renderBreakdown(elId, data) {
+        const el = document.getElementById(elId);
+        if (data.length === 0) { el.innerHTML = '<div class="empty-stats">Pas de données</div>'; return; }
+        el.innerHTML = data.map(d => {
+            const color = d.rate >= 50 ? 'var(--success)' : d.rate >= 35 ? 'var(--warning)' : 'var(--danger)';
+            const pnlColor = d.pnl >= 0 ? 'var(--success)' : 'var(--danger)';
+            return `<div class="bd-row">
+                <div class="bd-top">
+                    <span class="bd-name">${pairFlags[d.name]||''} ${d.name}</span>
+                    <span class="bd-meta">${d.wins}/${d.total} · <span style="color:${pnlColor}">${d.pnl>=0?'+':''}${d.pnl.toFixed(2)}$</span></span>
+                </div>
+                <div class="bd-bar"><div class="bd-bar-fill" style="width:${d.rate}%;background:${color}"></div></div>
+            </div>`;
+        }).join('');
+    }
+
+    function renderEmotionBreakdown(trades) {
+        const map = {};
+        trades.forEach(t => {
+            const k = t.emotion || '—';
+            if (!map[k]) map[k] = { total: 0, pnl: 0, wins: 0 };
+            map[k].total++; map[k].pnl += (t.pnl||0);
+            if (t.result === 'WIN') map[k].wins++;
+        });
+        const data = Object.entries(map).map(([name,v]) => ({ name, ...v, rate: Math.round(v.wins/v.total*100) }))
+            .sort((a,b) => b.pnl - a.pnl);
+        const el = document.getElementById('breakdown-emotion');
+        if (data.length === 0) { el.innerHTML = '<div class="empty-stats">Pas de données</div>'; return; }
+        const maxAbs = Math.max(...data.map(d => Math.abs(d.pnl)), 1);
+        el.innerHTML = data.map(d => {
+            const color = d.pnl >= 0 ? 'var(--success)' : 'var(--danger)';
+            const width = Math.max(4, Math.round(Math.abs(d.pnl)/maxAbs*100));
+            return `<div class="bd-row">
+                <div class="bd-top">
+                    <span class="bd-name">${d.name} <span class="bd-meta">(${d.total} trades, ${d.rate}% WR)</span></span>
+                    <span class="bd-meta" style="color:${color}">${d.pnl>=0?'+':''}${d.pnl.toFixed(2)}$</span>
+                </div>
+                <div class="bd-bar"><div class="bd-bar-fill" style="width:${width}%;background:${color}"></div></div>
+            </div>`;
+        }).join('');
+    }
+
+    function setupCanvas(canvas) {
+        const W = canvas.offsetWidth || 300, H = canvas.offsetHeight || 140;
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = W * dpr; canvas.height = H * dpr;
+        canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        return { ctx, W, H };
+    }
+
+    function drawEquityChart(pts) {
+        const canvas = document.getElementById('equity-chart');
+        const { ctx, W, H } = setupCanvas(canvas);
+        ctx.clearRect(0,0,W,H);
+        if (pts.length < 2) return;
+        const minP = Math.min(...pts), maxP = Math.max(...pts);
+        const range = (maxP - minP) || 1;
+        const pad = 8;
+        const toX = i => pad + (i/(pts.length-1))*(W-pad*2);
+        const toY = v => pad + (1-(v-minP)/range)*(H-pad*2);
+        const pos = pts[pts.length-1] >= pts[0];
+        const lc = pos ? '#22d3a0' : '#f43f5e';
+        const grad = ctx.createLinearGradient(0,0,0,H);
+        grad.addColorStop(0, pos ? 'rgba(34,211,160,0.22)' : 'rgba(244,63,94,0.22)');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.beginPath();
+        ctx.moveTo(toX(0), toY(pts[0]));
+        pts.forEach((p,i) => i>0 && ctx.lineTo(toX(i), toY(p)));
+        ctx.lineTo(toX(pts.length-1), H); ctx.lineTo(toX(0), H);
+        ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(toX(0), toY(pts[0]));
+        pts.forEach((p,i) => i>0 && ctx.lineTo(toX(i), toY(p)));
+        ctx.strokeStyle = lc; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
+    }
+
+    function drawMonthlyChart(trades) {
+        const canvas = document.getElementById('monthly-chart');
+        const { ctx, W, H } = setupCanvas(canvas);
+        ctx.clearRect(0,0,W,H);
+        const monthlyPnl = {};
+        monthsList.forEach(m => monthlyPnl[m] = 0);
+        trades.forEach(t => {
+            const m = weekToMonth(t.week);
+            if (m) monthlyPnl[m] += (t.pnl || 0);
+        });
+        const values = monthsList.map(m => monthlyPnl[m]);
+        const maxAbs = Math.max(...values.map(Math.abs), 1);
+        const pad = 6;
+        const barW = (W - pad*2) / monthsList.length;
+        const zeroY = H/2;
+        values.forEach((v, i) => {
+            const x = pad + i*barW;
+            const barH = (Math.abs(v)/maxAbs) * (H/2 - 8);
+            const color = v >= 0 ? '#22d3a0' : '#f43f5e';
+            ctx.fillStyle = color;
+            if (v >= 0) ctx.fillRect(x + barW*0.15, zeroY - barH, barW*0.7, barH);
+            else ctx.fillRect(x + barW*0.15, zeroY, barW*0.7, barH);
+        });
+        ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, zeroY); ctx.lineTo(W, zeroY); ctx.stroke();
+        // month initials
+        ctx.fillStyle = '#6b7a99';
+        ctx.font = '9px sans-serif';
+        ctx.textAlign = 'center';
+        monthsList.forEach((m, i) => {
+            const x = pad + i*barW + barW/2;
+            ctx.fillText(m.slice(0,1), x, H-2);
+        });
+    }
+
+    function drawResultsDonut(wins, losses, bes) {
+        const canvas = document.getElementById('results-donut');
+        const { ctx, W, H } = setupCanvas(canvas);
+        ctx.clearRect(0,0,W,H);
+        const total = wins + losses + bes;
+        const cx = W/2, cy = H/2, r = Math.min(W,H)/2 - 8, inner = r * 0.6;
+        const segs = [
+            { v: wins, color: '#22d3a0', label: 'Wins' },
+            { v: losses, color: '#f43f5e', label: 'Losses' },
+            { v: bes, color: '#fbbf24', label: 'BE' }
+        ];
+        let start = -Math.PI/2;
+        segs.forEach(s => {
+            if (s.v === 0) return;
+            const angle = (s.v/total) * Math.PI*2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, r, start, start+angle);
+            ctx.closePath();
+            ctx.fillStyle = s.color;
+            ctx.fill();
+            start += angle;
+        });
+        ctx.beginPath();
+        ctx.arc(cx, cy, inner, 0, Math.PI*2);
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-card') || '#141926';
+        ctx.fill();
+        ctx.fillStyle = '#e8edf5';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(total, cx, cy);
+        ctx.font = '9px sans-serif';
+        ctx.fillStyle = '#6b7a99';
+        ctx.fillText('trades', cx, cy + 14);
+
+        const legend = document.getElementById('results-legend');
+        legend.innerHTML = segs.map(s => `<div class="dl-item"><span class="dl-dot" style="background:${s.color}"></span>${s.label}: ${s.v}</div>`).join('');
+    }
+
+    document.getElementById('trade-modal').addEventListener('click', function(e) { if (e.target===this) closeModal(); });
+
+    if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+    setInterval(() => { if (appState.balance) saveToStorage(); }, 10000);
+    window.addEventListener('beforeunload', () => { if (appState.balance) saveToStorage(); });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('journal-year').value = new Date().getFullYear();
+        const data = localStorage.getItem('tradingJournal_v2');
+        if (data) {
+            try {
+                appState = JSON.parse(data);
+                if (!appState.year) appState.year = new Date().getFullYear();
+                document.getElementById('setup-screen').style.display = 'none';
+                document.getElementById('app-container').style.display = 'block';
+                updateHeaderStats(); renderMonths();
+            } catch(e) { console.error(e); }
+        }
+    });
+</script>
+</body>
+</html>
